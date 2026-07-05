@@ -1,35 +1,54 @@
-import type { LoginValues, SignupValues, ForgotPasswordValues } from "@/features/auth/lib/schemas";
+import { supabase } from "@/shared/lib/supabase";
+import type {
+  LoginValues,
+  SignupValues,
+  ForgotPasswordValues,
+} from "@/features/auth/lib/schemas";
 
-const MOCK_LATENCY_MS = 600;
-
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Mock auth API. Each function's signature matches what the eventual
- * Supabase Auth call will look like (`supabase.auth.signInWithPassword`,
- * `signUp`, `resetPasswordForEmail`), so swapping the implementation later
- * doesn't require touching any component that calls these.
- */
 export async function signIn(values: LoginValues): Promise<{ success: true }> {
-  await wait(MOCK_LATENCY_MS);
-  if (values.password.length < 6) {
-    throw new Error("Incorrect email or password.");
+  const { error } = await supabase.auth.signInWithPassword({
+    email: values.email,
+    password: values.password,
+  });
+
+  if (error) {
+    throw new Error(error.message);
   }
+
   return { success: true };
 }
 
 export async function signUp(values: SignupValues): Promise<{ success: true }> {
-  await wait(MOCK_LATENCY_MS);
-  void values;
+  const { error } = await supabase.auth.signUp({
+    email: values.email,
+    password: values.password,
+    options: {
+      data: {
+        name: values.name,
+      },
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
   return { success: true };
 }
 
 export async function requestPasswordReset(
   values: ForgotPasswordValues,
 ): Promise<{ success: true }> {
-  await wait(MOCK_LATENCY_MS);
-  void values;
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    values.email,
+    {
+      redirectTo: `${window.location.origin}/reset-password`,
+    },
+  );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
   return { success: true };
 }
